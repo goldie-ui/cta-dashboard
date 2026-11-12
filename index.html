@@ -13,8 +13,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="세무사 대시보드">
-<title>세무사 시험 준비 대시보드</title>
+<meta name="apple-mobile-web-app-title" content="민지의 스터디 대시보드">
+<title>민지의 스터디 대시보드</title>
 <style>
   /* ─────────── 토큰: 라이트가 기본 ─────────── */
   :root{
@@ -395,7 +395,7 @@
   <header class="top glass">
     <div class="brand">
       <p class="eyebrow">CTA · 세무사 시험 준비</p>
-      <h1>나의 스터디 대시보드</h1>
+      <h1>민지의 스터디 대시보드 <span style="font-size:.62em;font-weight:700;color:var(--ink-2);letter-spacing:0">서울 D-2</span></h1>
       <p class="greet" id="greet"></p>
     </div>
     <div class="head-right">
@@ -958,7 +958,7 @@
     $("#tmSkip").innerHTML = mode === "focus" ? "휴식으로 &rarr;" : "집중으로 &rarr;";
     $("#tmMeta").textContent = "오늘 " + tm.done + "회";
     $("#tmDots").textContent = "🍅".repeat(Math.min(tm.done, 12)) + (tm.done > 12 ? " +" + (tm.done-12) : "");
-    document.title = ticking ? m + ":" + s + " · " + (mode==="focus"?"집중":"휴식") : "세무사 시험 준비 대시보드";
+    document.title = ticking ? m + ":" + s + " · " + (mode==="focus"?"집중":"휴식") : "민지의 스터디 대시보드";
   }
   function stopTimer(){ ticking = false; if(iv){ clearInterval(iv); iv = null; } paintTimer(); }
   function switchMode(auto){
