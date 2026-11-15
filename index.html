@@ -390,14 +390,35 @@
         background:#04070a;overflow:hidden;display:grid;grid-template-columns:38% 1fr;
         align-items:center;min-height:200px}
   .tree canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .tree-msg{grid-column:2;position:relative;margin:0;font-weight:800;letter-spacing:.06em;line-height:1.2;
-            font-size:clamp(18px,3.6vw,27px);
-            background:linear-gradient(100deg,#c98f2e 0%,#ffd98a 38%,#fffdf2 48%,#ffd98a 58%,#c98f2e 100%);
-            background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
-            animation:shine 4.2s linear infinite}
-  .tree-msg span{display:block;margin-top:4px;font-size:12px;font-weight:600;letter-spacing:0;
-                 color:#7fa893;-webkit-text-fill-color:#7fa893}
-  @keyframes shine{from{background-position:160% 0}to{background-position:-60% 0}}
+  .tree-msg{grid-column:2;position:relative;margin:0;line-height:1.15}
+  .tree-msg b{display:inline-block;font-weight:800;letter-spacing:.04em;
+              font-size:clamp(21px,4.4vw,34px);
+              background:linear-gradient(100deg,#b9792a 0%,#ffd98a 38%,#fffdf2 48%,#ffd98a 58%,#b9792a 100%);
+              background-size:280% 100%;-webkit-background-clip:text;background-clip:text;
+              -webkit-text-fill-color:transparent;color:transparent;
+              animation:shine 4s linear infinite, pop .55s cubic-bezier(.2,1.6,.4,1) backwards}
+  .tree-msg b+b{margin-left:.18em}
+  .tree-msg b:nth-child(1){animation-delay:0s,.05s}
+  .tree-msg b:nth-child(2){animation-delay:-.5s,.16s}
+  .tree-msg b:nth-child(3){animation-delay:-1s,.27s}
+  .tree-msg b:nth-child(4){animation-delay:-1.5s,.38s}
+  .tree-msg .sub{display:block;margin-top:7px;font-size:12.5px;font-weight:600;letter-spacing:0;
+                 color:#b9d6c6;animation:pop .55s cubic-bezier(.2,1.6,.4,1) .52s backwards}
+  .tree-msg .date{display:block;margin-top:3px;font-family:var(--mono);font-size:10.5px;
+                  letter-spacing:.16em;color:#6c8f7f;animation:pop .55s ease .62s backwards}
+  @keyframes shine{from{background-position:170% 0}to{background-position:-70% 0}}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.9)}to{opacity:1;transform:none}}
+
+  /* 제목의 "청순한" — 형광펜 한 줄 + 그라데이션 */
+  .brand h1 .pure{font-style:normal;position:relative;white-space:nowrap;
+                  background:linear-gradient(92deg,#35c48f 0%,#56d2d2 46%,#8fb4ff 100%);
+                  -webkit-background-clip:text;background-clip:text;
+                  -webkit-text-fill-color:transparent;color:transparent}
+  .brand h1 .pure::after{content:"";position:absolute;left:-.06em;right:-.06em;bottom:.04em;height:.34em;
+                         border-radius:3px;z-index:-1;
+                         background:linear-gradient(92deg,rgba(53,196,143,.26),rgba(143,180,255,.2));
+                         transform:scaleX(0);transform-origin:left;animation:swash .7s .25s cubic-bezier(.2,.9,.3,1) forwards}
+  @keyframes swash{to{transform:scaleX(1)}}
   .tree .off{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;
              border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.35);color:#7d9c8e;
              font-size:13px;line-height:1;cursor:pointer}
@@ -415,14 +436,16 @@
   <!-- 축하 배너 -->
   <div class="tree" id="tree">
     <canvas id="treeCv" role="img" aria-label="아스키 크리스마스 트리"></canvas>
-    <p class="tree-msg">축 첫 출근<span>민지님, 오늘부터 출근이에요 🎉</span></p>
+    <p class="tree-msg"><b>축</b><b>첫</b><b>출</b><b>근</b>
+      <span class="sub">민지님, 오늘부터 출근이에요 🎉</span>
+      <span class="date" id="treeDate"></span></p>
     <button class="off" id="treeOff" type="button" aria-label="배너 숨기기" title="숨기기">✕</button>
   </div>
 
   <header class="top glass">
     <div class="brand">
       <p class="eyebrow">CTA · 세무사 시험 준비</p>
-      <h1>청순한 민지의 스터디 대시보드</h1>
+      <h1><em class="pure">청순한</em> 민지의 스터디 대시보드</h1>
       <p class="greet" id="greet"></p>
     </div>
     <div class="head-right">
@@ -1339,6 +1362,10 @@
   (function tree(){
     const wrap = $("#tree"), cv = $("#treeCv");
     if(!cv) return;
+    const dn = new Date();
+    $("#treeDate").textContent = dn.getFullYear() + "." + String(dn.getMonth()+1).padStart(2,"0")
+                               + "." + String(dn.getDate()).padStart(2,"0")
+                               + " " + "일월화수목금토"[dn.getDay()] + "요일";
     const ctx = cv.getContext("2d", {alpha:false});
     const LS_TREE = "cta_tree_off_v1";
 
@@ -1402,13 +1429,19 @@
       const col = PETAL[(Math.random()*PETAL.length)|0];
       const n = 42 + (Math.random()*24|0);
       for(let i=0;i<n;i++){
-        const a = Math.random()*Math.PI*2, sp = 24 + Math.random()*74;
+        const a = Math.random()*Math.PI*2, sp = 32 + Math.random()*96;
         fw.push({ x:bx, y:by, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
-                  life:1, c:col, r:.6 + Math.random()*1.1 });
+                  life:1, c:col, r:.7 + Math.random()*1.3 });
       }
     }
 
-    let W=0, H=0, dpr=1, ang=0, raf=null, t0=performance.now(), tPrev=t0;
+    // 배경에 떠다니는 반짝이
+    const dust = [];
+    for(let i=0;i<34;i++) dust.push({ x:Math.random(), y:Math.random(),
+      vx:(Math.random()-.5)*.012, vy:-.004-Math.random()*.012,
+      r:.5+Math.random()*1.3, ph:Math.random()*6.28 });
+
+    let W=0, H=0, dpr=1, ang=0, raf=null, t0=performance.now(), tPrev=t0, glow=null;
 
     function size(){
       dpr = Math.min(devicePixelRatio||1, 2);
@@ -1416,6 +1449,10 @@
       cv.width = W*dpr; cv.height = H*dpr;
       ctx.setTransform(dpr,0,0,dpr,0,0);
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      glow = ctx.createRadialGradient(W*.21, H*.42, 0, W*.21, H*.42, Math.max(W*.52, H*.95));
+      glow.addColorStop(0,   "rgba(255,170,120,.17)");
+      glow.addColorStop(.42, "rgba(190,110,160,.09)");
+      glow.addColorStop(1,   "rgba(4,7,10,0)");
     }
 
     function frame(now){
@@ -1426,6 +1463,18 @@
       const cx = W*.21, cy = H/2, scale = Math.min(W*.46, H)*1.12;
 
       ctx.fillStyle = "#04070a"; ctx.fillRect(0,0,W,H);
+      if(glow){ ctx.fillStyle = glow; ctx.fillRect(0,0,W,H); }
+
+      // 떠다니는 반짝이
+      for(const s of dust){
+        s.x += s.vx*dt; s.y += s.vy*dt;
+        if(s.y < -.05){ s.y = 1.05; s.x = Math.random(); }
+        if(s.x < -.05) s.x = 1.05; else if(s.x > 1.05) s.x = -.05;
+        ctx.globalAlpha = .18 + .32*(.5 + .5*Math.sin(t*1.6 + s.ph));
+        ctx.fillStyle = "#ffe9c9";
+        ctx.beginPath(); ctx.arc(s.x*W, s.y*H, s.r, 0, 6.2832); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
 
       // 먼 점부터 그려서 앞쪽이 덮도록
       const zs = new Float32Array(pts.length);
@@ -1459,16 +1508,20 @@
 
       // 폭죽 — 꽃다발 위로 터진다
       fwNext -= dt;
-      if(fwNext <= 0){ burst(); fwNext = 1.1 + Math.random()*1.6; }
+      if(fwNext <= 0){ burst(); fwNext = .9 + Math.random()*1.4; }
+      ctx.lineCap = "round";
       for(let i=fw.length-1;i>=0;i--){
         const q = fw[i];
         q.vy += 58*dt; q.vx *= .985;
         q.x += q.vx*dt; q.y += q.vy*dt;
-        q.life -= dt*.72;
+        q.life -= dt*.66;
         if(q.life <= 0){ fw.splice(i,1); continue; }
-        ctx.globalAlpha = q.life*.9;
-        ctx.fillStyle = q.c;
-        ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.2832); ctx.fill();
+        ctx.globalAlpha = Math.min(1, q.life*1.15);
+        ctx.strokeStyle = q.c; ctx.lineWidth = q.r*1.5;
+        ctx.beginPath();                                   // 꼬리를 남겨 불티처럼
+        ctx.moveTo(q.x - q.vx*.045, q.y - q.vy*.045);
+        ctx.lineTo(q.x, q.y);
+        ctx.stroke();
       }
       ctx.globalAlpha = 1;
 
