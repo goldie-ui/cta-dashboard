@@ -384,6 +384,26 @@
     .search input,.todo-add input,.memo textarea,.log-add input,.sel{font-size:16px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ── 축하 배너 ── */
+  .tree{position:relative;margin:0 0 14px;border-radius:var(--r);border:1px solid var(--hair);
+        background:#04070a;overflow:hidden;display:flex;align-items:center;justify-content:center;
+        gap:16px;padding:8px 46px 8px 10px;min-height:44px}
+  .tree canvas{display:block;width:168px;height:128px;flex:none}
+  .tree-msg{margin:0;font-weight:800;letter-spacing:.06em;line-height:1.2;
+            font-size:clamp(18px,3.6vw,27px);
+            background:linear-gradient(100deg,#c98f2e 0%,#ffd98a 38%,#fffdf2 48%,#ffd98a 58%,#c98f2e 100%);
+            background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+            animation:shine 4.2s linear infinite}
+  .tree-msg span{display:block;margin-top:4px;font-size:12px;font-weight:600;letter-spacing:0;
+                 color:#7fa893;-webkit-text-fill-color:#7fa893}
+  @keyframes shine{from{background-position:160% 0}to{background-position:-60% 0}}
+  .tree .off{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;
+             border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.35);color:#7d9c8e;
+             font-size:13px;line-height:1;cursor:pointer}
+  .tree .off:hover{color:#dff3e8;border-color:rgba(255,255,255,.3)}
+  .tree.hid canvas,.tree.hid .tree-msg{display:none}
+  @media (max-width:560px){ .tree canvas{width:118px;height:104px} }
 </style>
 </head>
 <body>
@@ -392,10 +412,17 @@
 
 <div class="wrap">
 
+  <!-- 축하 배너 -->
+  <div class="tree" id="tree">
+    <canvas id="treeCv" role="img" aria-label="아스키 크리스마스 트리"></canvas>
+    <p class="tree-msg">축 첫 출근<span>민지님, 오늘부터 출근이에요 🎉</span></p>
+    <button class="off" id="treeOff" type="button" aria-label="배너 숨기기" title="숨기기">✕</button>
+  </div>
+
   <header class="top glass">
     <div class="brand">
       <p class="eyebrow">CTA · 세무사 시험 준비</p>
-      <h1>민지의 스터디 대시보드 <span style="font-size:.62em;font-weight:700;color:var(--ink-2);letter-spacing:0">서울 D-DAY</span></h1>
+      <h1>청순한 민지의 스터디 대시보드</h1>
       <p class="greet" id="greet"></p>
     </div>
     <div class="head-right">
@@ -421,7 +448,6 @@
     </div>
     <span class="next" aria-hidden="true">다음 →</span>
   </div>
-
 
   <div class="toolbar">
     <div class="search">
@@ -1308,6 +1334,117 @@
   // 잔디밭은 최신 주가 보이도록 오른쪽 끝으로
   const hs = document.querySelector(".heat-scroll");
   hs.scrollLeft = hs.scrollWidth;
+
+  /* ── 축하 트리: 문자로 그리는 회전 3D 트리 ── */
+  (function tree(){
+    const wrap = $("#tree"), cv = $("#treeCv");
+    if(!cv) return;
+    const ctx = cv.getContext("2d", {alpha:false});
+    const LS_TREE = "cta_tree_off_v1";
+
+    const N = 900, SNOW = 45;
+    const GREEN = ["#1d7a4a","#249a5c","#2fbd72","#3ddd8a","#8ff0bd"];
+    const LAMP  = ["#ff4d4d","#ffd34d","#4db8ff","#ff8ad4","#fff3c4"];
+    const CH    = "#@%&WMX$8B0oa*+=~:.".split("");
+
+    // 원뿔 껍질 위의 점. y는 -1(꼭대기) ~ 1(바닥), 단마다 반지름이 넓어진다.
+    const pts = [];
+    for(let i=0;i<N;i++){
+      const y = -1 + 2*Math.pow(Math.random(), .78);      // 아래로 갈수록 촘촘
+      const h = (y+1)/2;
+      const tier = (h*5)%1;                                // 5단
+      const r = .60*h*(.76 + .24*tier)*(.93 + .07*Math.random());
+      const a = Math.random()*Math.PI*2;
+      const lamp = Math.random() < .13;
+      pts.push({
+        x:Math.cos(a)*r, z:Math.sin(a)*r, y,
+        c: lamp ? LAMP[(Math.random()*LAMP.length)|0] : GREEN[(Math.random()*GREEN.length)|0],
+        ch: lamp ? "@" : CH[(Math.random()*CH.length)|0],
+        lamp, ph: Math.random()*Math.PI*2
+      });
+    }
+    const order = pts.map((_,i)=>i);
+
+    const snow = [];
+    for(let i=0;i<SNOW;i++) snow.push({x:Math.random(), y:Math.random(), v:.02+Math.random()*.05, s:Math.random()});
+
+    let W=0, H=0, dpr=1, ang=0, raf=null, t0=performance.now();
+
+    function size(){
+      dpr = Math.min(devicePixelRatio||1, 2);
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = W*dpr; cv.height = H*dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    }
+
+    function frame(now){
+      const t = (now - t0)/1000;
+      ang += .010;
+      const ca = Math.cos(ang), sa = Math.sin(ang);
+      const cx = W/2, cy = H/2 + H*.04, scale = Math.min(W,H)*1.02;
+
+      ctx.fillStyle = "#04070a"; ctx.fillRect(0,0,W,H);
+
+      // 눈
+      ctx.font = "10px ui-monospace,monospace";
+      for(const f of snow){
+        f.y += f.v/60; if(f.y > 1){ f.y = 0; f.x = Math.random(); }
+        ctx.fillStyle = f.s > .6 ? "rgba(220,240,255,.75)" : "rgba(160,190,215,.4)";
+        ctx.fillText(f.s > .8 ? "*" : (f.s > .4 ? "·" : "."), f.x*W, f.y*H);
+      }
+
+      // 먼 점부터 그려서 앞쪽이 덮도록
+      const zs = new Float32Array(pts.length);
+      for(let i=0;i<pts.length;i++){ const p=pts[i]; zs[i] = p.x*sa + p.z*ca; }
+      order.sort((a,b)=> zs[a]-zs[b]);
+
+      const fs = Math.max(6, scale*.042);
+      ctx.font = fs.toFixed(1)+"px ui-monospace,SFMono-Regular,monospace";
+      for(const i of order){
+        const p = pts[i], z = zs[i];
+        const d = 1/(2.3 + z);                       // 원근
+        const sx = cx + (p.x*ca - p.z*sa)*d*scale;
+        const sy = cy + p.y*d*scale*.92;
+        let al = .30 + .70*((z+.5)/1.0);             // 뒤는 어둡게
+        if(p.lamp) al = Math.max(al, .5) * (.6 + .4*Math.sin(t*2.4 + p.ph));  // 깜빡임
+        ctx.globalAlpha = Math.max(.06, Math.min(1, al));
+        ctx.fillStyle = p.c;
+        ctx.fillText(p.ch, sx, sy);
+      }
+      ctx.globalAlpha = 1;
+
+      // 꼭대기 별
+      const tw = .65 + .35*Math.sin(t*3);
+      ctx.globalAlpha = tw;
+      ctx.fillStyle = "#ffe9a3";
+      ctx.font = (fs*2.4).toFixed(1)+"px ui-monospace,monospace";
+      ctx.fillText("✸", cx, cy - scale/2.3*.92 - fs*.6);
+      ctx.globalAlpha = 1;
+
+      raf = requestAnimationFrame(frame);
+    }
+
+    function start(){ if(raf) return; size(); t0 = performance.now(); raf = requestAnimationFrame(frame); }
+    function stop(){ if(raf){ cancelAnimationFrame(raf); raf = null; } }
+
+    const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+    function apply(){
+      const off = load(LS_TREE, false);
+      wrap.classList.toggle("hid", !!off);
+      $("#treeOff").textContent = off ? "🎄" : "✕";
+      cv.style.display = off ? "none" : "block";
+      $("#treeOff").title = off ? "트리 보기" : "숨기기";
+      (off || reduce) ? stop() : start();
+      if(off === false && reduce){ size(); frame(performance.now()); stop(); }  // 정지 화면 1컷
+    }
+    $("#treeOff").addEventListener("click", () => { save(LS_TREE, !load(LS_TREE,false)); apply(); });
+    addEventListener("resize", () => { if(raf){ size(); } });
+    document.addEventListener("visibilitychange", () => {
+      document.visibilityState === "hidden" ? stop() : apply();
+    });
+    apply();
+  })();
 </script>
 </body>
 </html>
