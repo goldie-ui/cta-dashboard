@@ -1435,10 +1435,11 @@
                    c:LEAF[(Math.random()*LEAF.length)|0], k:2, lamp:false, ph:0 });
       }
     }
-    for(let i=0;i<150;i++){                                // 낙엽 — 바닥에 쌓인다
-      const a = Math.random()*Math.PI*2, r = .10 + Math.sqrt(Math.random())*.62;
+    for(let i=0;i<150;i++){                                // 낙엽 — 바닥에 쌓인다.
+      const a = Math.random()*Math.PI*2;                   // 이미 떨어진 잎이라 fix:나무와 같이 안 돈다
+      const r = .10 + Math.sqrt(Math.random())*.62;
       pts.push({ x:Math.cos(a)*r, y:.90 + Math.random()*.06, z:Math.sin(a)*r*.8,
-                 c:LEAF[(Math.random()*LEAF.length)|0], k:2, lamp:false, ph:0 });
+                 c:LEAF[(Math.random()*LEAF.length)|0], k:2, lamp:false, ph:0, fix:true });
     }
     for(let i=0;i<40;i++){                                 // 잎 사이로 드는 햇빛
       const a = Math.random()*Math.PI*2, r = .20 + Math.random()*.42;
@@ -1508,7 +1509,7 @@
 
       // 먼 점부터 그려서 앞쪽이 덮도록
       const zs = new Float32Array(pts.length);
-      for(let i=0;i<pts.length;i++){ const p=pts[i]; zs[i] = p.x*sa + p.z*ca; }
+      for(let i=0;i<pts.length;i++){ const p=pts[i]; zs[i] = p.fix ? p.z : p.x*sa + p.z*ca; }
       order.sort((a,b)=> zs[a]-zs[b]);
 
       const fs = Math.max(6, scale*.042);
@@ -1518,7 +1519,7 @@
         if(k !== curK){ ctx.shadowBlur = k===1 ? fs*1.5 : 0; curK = k; }
         if(k === 1) ctx.shadowColor = p.c;
         const d = 1/(2.3 + z);                       // 원근
-        const sx = cx + (p.x*ca - p.z*sa)*d*scale;
+        const sx = cx + (p.fix ? p.x : p.x*ca - p.z*sa)*d*scale;
         const sy = cy + p.y*d*scale*.92;
         let al = .30 + .70*((z+.5)/1.0);             // 뒤는 어둡게
         if(p.lamp) al = Math.max(al, k ? .66 : .5) * (.6 + .4*Math.sin(t*2.4 + p.ph));  // 깜빡임
